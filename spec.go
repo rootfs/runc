@@ -190,7 +190,12 @@ func createLibcontainerConfig(spec *specs.LinuxSpec) (*configs.Config, error) {
 		Capabilities: spec.Linux.Capabilities,
 		Readonlyfs:   spec.Root.Readonly,
 		Hostname:     spec.Hostname,
-		Privatefs:    true,
+		Networks: []*configs.Network{
+			{
+				Type: "loopback",
+			},
+		},
+		RootMount:    "private",
 	}
 	for _, ns := range spec.Linux.Namespaces {
 		t, exists := namespaceMapping[ns.Type]
