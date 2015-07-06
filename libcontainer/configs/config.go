@@ -72,11 +72,12 @@ type Config struct {
 	// bind mounts are writtable.
 	Readonlyfs bool `json:"readonlyfs"`
 
-	// RootMount is the rootfs mount mode, it is one of the followings:
+	// RootfsMountMode is the rootfs mount propagation mode.
+	// On linux it is one of the followings:
 	// "private": rootfs is mounted as MS_PRIVATE
 	// "shared": rootfs is mounted as MS_SHARED
 	// "slave": rootfs is mounted as MS_SLAVE
-	RootMount string `json:"root_mount"`
+	RootfsMountMode PropagationMode `json:"root_mount"`
 
 	// Mounts specify additional source and destination paths that will be mounted inside the container's
 	// rootfs and mount namespace if specified

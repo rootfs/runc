@@ -55,7 +55,7 @@ func setupRootfs(config *configs.Config, console *linuxConsole) (err error) {
 	if err := syscall.Chdir(config.Rootfs); err != nil {
 		return newSystemError(err)
 	}
-	if strings.EqualFold(config.RootMount, "shared") {
+	if config.RootfsMountMode == configs.SHARED {
 		err = changeRoot(config.Rootfs)
 	} else {
 		if config.NoPivotRoot {
@@ -397,10 +397,10 @@ func mknodDevice(dest string, node *configs.Device) error {
 
 func prepareRoot(config *configs.Config) error {
 	flag := syscall.MS_SLAVE | syscall.MS_REC
-	if strings.EqualFold(config.RootMount, "private") {
+	if config.RootfsMountMode == configs.PRIVATE {
 		flag = syscall.MS_PRIVATE | syscall.MS_REC
 	}
-	if strings.EqualFold(config.RootMount, "shared") {
+	if config.RootfsMountMode == configs.SHARED {
 		flag = syscall.MS_SHARED | syscall.MS_REC
 	}
 	if err := syscall.Mount("", "/", "", uintptr(flag), ""); err != nil {
