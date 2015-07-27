@@ -77,7 +77,7 @@ type Config struct {
 	// "private": rootfs is mounted as MS_PRIVATE
 	// "shared": rootfs is mounted as MS_SHARED
 	// "slave": rootfs is mounted as MS_SLAVE
-	RootfsMountMode PropagationMode `json:"root_mount"`
+	RootfsMountMode PropagationMode `json:"root_mount_mode"`
 
 	// Mounts specify additional source and destination paths that will be mounted inside the container's
 	// rootfs and mount namespace if specified
