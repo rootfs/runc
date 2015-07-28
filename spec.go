@@ -147,12 +147,9 @@ var namespaceMapping = map[string]configs.NamespaceType{
 }
 
 var mountPropagationMapping = map[string]configs.PropagationMode{
-	"private":  configs.PRIVATE,
-	"slave":    configs.SLAVE,
-	"shared":   configs.SHARED,
-	"rprivate": configs.RPRIVATE,
-	"rslave":   configs.RSLAVE,
-	"rshared":  configs.RSHARED,
+	"private": configs.PRIVATE,
+	"slave":   configs.SLAVE,
+	"shared":  configs.SHARED,
 }
 
 // loadSpec loads the specification from the provided path.
