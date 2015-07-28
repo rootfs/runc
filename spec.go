@@ -199,11 +199,6 @@ func createLibcontainerConfig(spec *specs.LinuxSpec) (*configs.Config, error) {
 		Capabilities: spec.Linux.Capabilities,
 		Readonlyfs:   spec.Root.Readonly,
 		Hostname:     spec.Hostname,
-		Networks: []*configs.Network{
-			{
-				Type: "loopback",
-			},
-		},
 	}
 	if p, exists := mountPropagationMapping[spec.Linux.RootfsPropagation]; exists {
 		config.RootfsMountMode = p
