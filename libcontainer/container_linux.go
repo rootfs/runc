@@ -240,7 +240,7 @@ func (c *linuxContainer) Destroy() error {
 	}
 	// if rootfs propagation is shared, cleanup mountpoints
 	rootfs := c.config.Rootfs
-	if c.config.RootfsMountMode == configs.RSHARED || c.config.RootfsMountMode == configs.SHARED {
+	if c.config.RootfsMountMode == configs.SHARED {
 		// umount /dev/console
 		dest := filepath.Join(rootfs, "/dev/console")
 		syscall.Unmount(dest, 0)
@@ -258,8 +258,9 @@ func (c *linuxContainer) Destroy() error {
 				}
 			}
 		}
+		syscall.Unmount(rootfs, 0)
 	}
-	syscall.Unmount(rootfs, 0)
+
 	c.initProcess = nil
 	return err
 }

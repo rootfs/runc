@@ -200,7 +200,7 @@ func createLibcontainerConfig(spec *specs.LinuxSpec) (*configs.Config, error) {
 	if p, exists := mountPropagationMapping[spec.Linux.RootfsPropagation]; exists {
 		config.RootfsMountMode = p
 	} else {
-		config.RootfsMountMode = mountPropagationMapping["rslave"]
+		config.RootfsMountMode = mountPropagationMapping["slave"]
 	}
 	for _, ns := range spec.Linux.Namespaces {
 		t, exists := namespaceMapping[ns.Type]
