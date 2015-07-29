@@ -33,7 +33,7 @@ func setupRootfs(config *configs.Config, console *linuxConsole) (err error) {
 				return newSystemError(err)
 			}
 		}
-		if err := mountToRootfs(m, config.Rootfs, config.MountLabel); err != nil {
+		if err := mountToRootfs(m, config.Rootfs, config.MountLabel, config.RootfsMountMode == configs.SHARED); err != nil {
 			return newSystemError(err)
 		}
 
@@ -91,10 +91,12 @@ func mountCmd(cmd configs.Command) error {
 	return nil
 }
 
-func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
+func mountToRootfs(m *configs.Mount, rootfs, mountLabel string, shared bool) error {
 	var (
 		dest = m.Destination
 		data = label.FormatMountLabel(m.Data, mountLabel)
+		// if rootfs is MS_SHARED, make sub directory MS_SLAVE
+		flag = syscall.MS_SLAVE | syscall.MS_REC
 	)
 	if !strings.HasPrefix(dest, rootfs) {
 		dest = filepath.Join(rootfs, dest)
@@ -105,13 +107,27 @@ func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
 		if err := os.MkdirAll(dest, 0755); err != nil && !os.IsExist(err) {
 			return err
 		}
-		return syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), "")
+		if shared {
+			if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), ""); err != nil {
+				return err
+			}
+			return syscall.Mount("", dest, "none", uintptr(flag), "")
+		} else {
+			return syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), "")
+		}
 	case "mqueue":
 		if err := os.MkdirAll(dest, 0755); err != nil && !os.IsExist(err) {
 			return err
 		}
-		if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), ""); err != nil {
-			return err
+		if shared {
+			if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), ""); err != nil {
+				return err
+			}
+			syscall.Mount("", dest, "none", uintptr(flag), data)
+		} else {
+			if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), ""); err != nil {
+				return err
+			}
 		}
 		return label.SetFileLabel(dest, mountLabel)
 	case "tmpfs":
@@ -121,8 +137,15 @@ func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
 				return err
 			}
 		}
-		if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), data); err != nil {
-			return err
+		if shared {
+			if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), data); err != nil {
+				return err
+			}
+			syscall.Mount("", dest, "none", uintptr(flag), data)
+		} else {
+			if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), data); err != nil {
+				return err
+			}
 		}
 		if stat != nil {
 			if err = os.Chmod(dest, stat.Mode()); err != nil {
@@ -134,7 +157,14 @@ func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
 		if err := os.MkdirAll(dest, 0755); err != nil && !os.IsExist(err) {
 			return err
 		}
-		return syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), data)
+		if shared {
+			if err := syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), data); err != nil {
+				return err
+			}
+			syscall.Mount("", dest, "none", uintptr(flag), data)
+		} else {
+			return syscall.Mount(m.Source, dest, m.Device, uintptr(m.Flags), data)
+		}
 	case "bind":
 		stat, err := os.Stat(m.Source)
 		if err != nil {
@@ -192,11 +222,11 @@ func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
 			Flags:       defaultMountFlags,
 			Data:        "mode=755",
 		}
-		if err := mountToRootfs(tmpfs, rootfs, mountLabel); err != nil {
+		if err := mountToRootfs(tmpfs, rootfs, mountLabel, shared); err != nil {
 			return err
 		}
 		for _, b := range binds {
-			if err := mountToRootfs(b, rootfs, mountLabel); err != nil {
+			if err := mountToRootfs(b, rootfs, mountLabel, shared); err != nil {
 				return err
 			}
 		}
