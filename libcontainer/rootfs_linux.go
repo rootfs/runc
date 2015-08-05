@@ -399,7 +399,7 @@ func mknodDevice(dest string, node *configs.Device) error {
 
 func prepareRoot(config *configs.Config) error {
 	flag := syscall.MS_SLAVE | syscall.MS_REC
-	if config.Privatefs {
+	if config.RootfsMountPropagation == configs.MNT_RPRIVATE {
 		flag = syscall.MS_PRIVATE | syscall.MS_REC
 	}
 	if err := syscall.Mount("", "/", "", uintptr(flag), ""); err != nil {

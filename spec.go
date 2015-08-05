@@ -146,6 +146,11 @@ var namespaceMapping = map[string]configs.NamespaceType{
 	"uts":     configs.NEWUTS,
 }
 
+var mountPropagationMapping = map[string]configs.MountPropagationMode{
+	"rprivate": configs.MNT_RPRIVATE,
+	"rslave":   configs.MNT_RSLAVE,
+}
+
 // loadSpec loads the specification from the provided path.
 // If the path is empty then the default path will be "config.json"
 func loadSpec(path string) (*specs.LinuxSpec, error) {
@@ -190,8 +195,17 @@ func createLibcontainerConfig(spec *specs.LinuxSpec) (*configs.Config, error) {
 		Capabilities: spec.Linux.Capabilities,
 		Readonlyfs:   spec.Root.Readonly,
 		Hostname:     spec.Hostname,
-		Privatefs:    true,
 	}
+
+	// Initialize rootfs mount propagation mode.
+	if p, exists := mountPropagationMapping[spec.Linux.RootfsPropagation]; exists {
+		config.RootfsMountPropagation = p
+	} else if spec.Linux.RootfsPropagation == "" {
+		config.RootfsMountPropagation = configs.MNT_RPRIVATE
+	} else {
+		return nil, fmt.Errorf("rootfsPropagation=%v is not supported", spec.Linux.RootfsPropagation)
+	}
+
 	for _, ns := range spec.Linux.Namespaces {
 		t, exists := namespaceMapping[ns.Type]
 		if !exists {
